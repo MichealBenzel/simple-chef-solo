@@ -111,5 +111,7 @@ rotate_logs
 lock || exit 1
 cd /var/chef
 git pull 2>&1 | tee $LOGFILE
-chef-solo -o "role[node-$HOSTNAME]" -N $HOSTNAME -l info -L $LOGFILE "$@"
+HOSTNAME_MUNGED=${HOSTNAME//./-}
+chef-solo -o "role[node-$HOSTNAME_MUNGED]" -N $HOSTNAME_MUNGED \
+    -l info -L $LOGFILE "$@"
 unlock
