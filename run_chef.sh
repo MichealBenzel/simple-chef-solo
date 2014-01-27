@@ -52,30 +52,30 @@ LOGFILE=/var/log/chef/solo.log
 lock() {
     if ( set -o noclobber; echo "$$" > $LOCKFILE ) 2>/dev/null; then
         trap "rm -f $LOCKFILE; exit $?" INT TERM EXIT
-        [[ -n $VERBOSE ]] && echo "Aquired lock"
+        log "Aquired lock"
         return 0
     fi
     local PID=`cat $LOCKFILE`
     local RUNNING=""
     [[ -d /proc/$PID ]] && RUNNING=" (Running)"
-    echo "Failed to acquire lock. Held by $PID$RUNNING"
+    log "Failed to acquire lock. Held by $PID$RUNNING"
     return 1
 }
 
 unlock() {
-    [[ -n $VERBOSE ]] && echo "Releasing lock"
+    log "Releasing lock"
     rm -f $LOCKFILE
     trap - INT TERM EXIT
 }
 
 random_delay() {
     local DELAY=$((RANDOM % 120))
-    echo "Sleeping for $DELAY seconds"
+    log "Sleeping for $DELAY seconds"
     sleep $DELAY
 }
 
 log() {
-    [[ -n $VERBOSE ]] && echo "$0: $@"
+    echo "$0: $@"
     echo "$0: $@" >> $LOGFILE
 }
 
@@ -110,7 +110,7 @@ rotate_logs
 [[ -n $RANDOM_DELAY ]] && random_delay
 lock || exit 1
 cd /var/chef
-git pull 2>&1 | tee $LOGFILE
+git pull 2>&1 | tee -a $LOGFILE
 HOSTNAME_MUNGED=${HOSTNAME//./-}
 chef-solo -o "role[node-$HOSTNAME_MUNGED]" -N $HOSTNAME_MUNGED \
     -l info -L $LOGFILE "$@"
